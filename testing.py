@@ -5,8 +5,8 @@ import numpy as np
 import time
 import asyncio
 
-api_key = 'fCBUzQtECIrp4dfeuc4AsahRalt48Or0HKbagFyMgdqXia112FjevdjSe7qdAgC4'
-api_secret = 'nVdJOZXc42vZYPtX2GBHzHHXMueHAL6atAMYIN4I08nscaqM6Cyj6zM9gnevJmLg'
+api_key = 
+api_secret = 
 
 client = Client(api_key, api_secret)
 

@@ -1,0 +1,118 @@
+import time
+import websocket , json
+from binance import Client
+import pandas as pd
+
+api_key = 
+api_secret = 
+
+client = Client(api_key, api_secret)
+
+li = []
+li2 = []
+li3 = []
+
+counter = 0
+
+asset = ''
+
+def coin():
+    x = pd.DataFrame(client.get_symbol_ticker())
+    y = x[x.symbol.str.contains('USD')]
+    z = y[~(y.symbol.str.contains('BUSD') | y.symbol.str.contains('UP') | y.symbol.str.contains(
+        'DOWN') | y.symbol.str.contains('USDT') | y.symbol.str.contains('USDC'))]
+
+    for i in z.symbol:
+        global li
+        li.append(i)
+
+    for i in li:
+        global li2
+        xx = (client.get_ticker(symbol=i))
+        yy = xx['priceChangePercent']
+        li2.append(yy)
+
+    for i in li2:
+        li3.append(float(i))
+    
+    global asset
+    
+    di = dict(zip(li, li3))
+
+    di.pop('AXSUSD')
+
+    max_key = max(di, key=di.get)
+
+    di.pop(max_key)
+
+    sec_key = max(di, key=di.get)
+
+    di.pop(sec_key)
+
+    third_key = max(di, key=di.get)
+
+    if counter == 0:
+        asset = str(max_key)
+        print(max_key)
+        return asset
+
+    if counter == 1:
+        asset = str(sec_key)
+        print(sec_key)
+        return sec_key
+
+    if counter == 2:
+        asset = str(third_key)
+        print(third_key)
+        return third_key
+
+    if counter >= 3:
+        print(f'other top 3 coins didnt work so going back to first {max_key}')
+        asset = str(max_key)
+        return max_key
+
+def on_close(ws):
+    print('closed')
+
+def gethistoricals(symbol, LT):
+    df = pd.DataFrame(
+        client.get_historical_klines(symbol, '5m', str(LT) + 'minutes ago UTC', '1 minute ago UTC'))
+    time.sleep(3)
+    closes = pd.DataFrame(df[4])
+    closes.columns = ['Close']
+    time.sleep(3)
+    closes['ST'] = closes.Close.rolling(7).sum()
+    closes['LT'] = closes.Close.rolling(25).sum()
+    time.sleep(3)
+    closes.dropna(inplace=True)
+    print(f'{closes} from get historicals')
+
+    return closes
+
+def coin_hist():
+    historicals = gethistoricals(asset, 125)
+    return historicals
+
+def liveSMA(hist, live):
+    liveST = (hist['ST'].values + live) / 8
+    liveLT = (hist['LT'].values + live) / 26
+    print(liveST, liveLT)
+    print(hist['ST'].values)
+    if liveST.size == 0:
+        coin_hist()
+    return liveST, liveLT
+    
+def on_message(ws, message):
+    json_message = json.loads(message)
+    
+    candle = json_message['k']
+    candle_close = candle['x']
+    close_price = float(candle['c'])
+    
+    if candle_close:
+        livest, livelt = liveSMA(coin_hist(), close_price)
+        '''if liveST > liveLT: place order'''
+        
+
+ws = websocket.WebSocketApp(f'wss://stream.binance.com:9443/ws/{coin().lower()}t@kline_1m', on_message = on_message, on_close = on_close, )
+ws.run_forever()

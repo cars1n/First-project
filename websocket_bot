@@ -3,8 +3,8 @@ import websocket , json
 from binance import Client
 import pandas as pd
 
-api_key = 
-api_secret = 
+api_key = 'fCBUzQtECIrp4dfeuc4AsahRalt48Or0HKbagFyMgdqXia112FjevdjSe7qdAgC4'
+api_secret = 'nVdJOZXc42vZYPtX2GBHzHHXMueHAL6atAMYIN4I08nscaqM6Cyj6zM9gnevJmLg'
 
 client = Client(api_key, api_secret)
 
@@ -112,6 +112,8 @@ def on_message(ws, message):
     if candle_close:
         livest, livelt = liveSMA(coin_hist(), close_price)
         '''if liveST > liveLT: place order'''
+        '''this closes connection allwing for you to do a while true loop'''
+        #ws.keep_running = False
         
 
 ws = websocket.WebSocketApp(f'wss://stream.binance.com:9443/ws/{coin().lower()}t@kline_1m', on_message = on_message, on_close = on_close, )
